@@ -1,4 +1,3 @@
-use std::io;
 use std::process::ExitCode;
 
 use bevy_ecs::prelude as bevy_ecs;
@@ -11,22 +10,14 @@ pub mod systems;
 
 use resources::*;
 
-fn read_key_event() -> io::Result<crossterm::event::KeyEvent> {
-    loop {
-        match crossterm::event::read()? {
-            crossterm::event::Event::Key(e) => return Ok(e),
-            _ => continue,
-        }
-    }
-}
-
 fn main() -> ExitCode {
     let mut world = World::default();
     world.insert_resource(Scene::Init);
 
     let init_system = world.register_system(systems::initial_checks);
     let mut gameplay_loop = Schedule::default();
-    gameplay_loop.add_systems((systems::run_turn, systems::render).chain());
+    gameplay_loop
+        .add_systems((systems::run_turn, systems::render, systems::read_key_event).chain());
 
     '_init: {
         world.insert_resource(Stdout::default());
@@ -49,19 +40,7 @@ fn main() -> ExitCode {
                 world.insert_resource(FullRedrawRequired(true));
                 world.insert_resource(Scene::Playing);
             }
-
-            // Run the gameplay loop and wait for a keypress
-            Scene::Playing => {
-                gameplay_loop.run(&mut world);
-                match read_key_event() {
-                    Ok(ev) => world.insert_resource(KeyEvent(ev)),
-                    Err(err) => {
-                        eprintln!("error: couldn't read key event: {}", err);
-                        return 1.into();
-                    }
-                }
-            }
-
+            Scene::Playing => gameplay_loop.run(&mut world),
             Scene::GameOver => todo!(),
             Scene::Quitting => break 'round,
         }
