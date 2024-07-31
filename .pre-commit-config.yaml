@@ -1,0 +1,22 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: fix-byte-order-marker
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: trailing-whitespace
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: "v1.0"
+    hooks:
+      - id: fmt
+      # the first `cargo clippy` run can fix mistakes,
+      # but doesn't raise an error when a lint fails
+      - id: clippy
+        args: ["--fix", "--allow-staged"]
+      - id: clippy
